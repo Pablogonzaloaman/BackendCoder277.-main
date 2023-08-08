@@ -1,4 +1,3 @@
-//@ts-check
 import { MongooseCartModel } from "./mongoose/carts.mongoose.js";
 
 class CartsModel{
@@ -94,4 +93,4 @@ class CartsModel{
     }
 }
 
-export const cartsModel = new CartsModel()
+export const CartsMongo = new CartsModel()

@@ -18,17 +18,16 @@ import { connectSocketServer } from "./utils/socketServer.js";
 import MongoStore from 'connect-mongo';
 import { iniPassport } from './config/passport.config.js';
 import passport from 'passport';
-import { env } from './config/env.js';
-import { authenticate } from './middlewares/main.js';
-
+import config from './config/config.js';
+import { authenticate, isAdmin, isUser } from './middlewares/main.js';
 
 const app = express();
-const PORT = 8080;
 
-connectMongo();
-const httpServer = app.listen(PORT, () => {
+
+//connectMongo();
+const httpServer = app.listen(config.PORT, () => {
     console.log(
-        `APP corriendo en ${__dirname} - escuchando en el servidor puerto http://localhost:${PORT}`
+        `APP corriendo en ${__dirname} - escuchando en el servidor puerto http://localhost:${config.PORT}`
     );
 });
 connectSocketServer(httpServer)
@@ -37,7 +36,7 @@ app.use(cookieParser('4lg0s3cr3t0'));
 app.use(
     session({
         store: MongoStore.create({
-            mongoUrl: env.MONGO_URL,
+            mongoUrl: config.MONGO_URL,
             ttl: 15 * 60,
         }),
         secret: "asd3ñc30kasod",
@@ -63,10 +62,10 @@ app.set("view engine", "handlebars");
 
 app.use("/api/products",authenticate, productsRouter);
 app.use("/api/carts",authenticate, cartsRouter);
-app.use("/api/users",authenticate, usersRouter);
-app.use("/chat", ChatRouter);
+app.use("/api/users"/* ,authenticate */, usersRouter);
+app.use("/chat",isUser, ChatRouter);
 app.use("/home",homeRouter)
-app.use("/realtimeproducts",authenticate,realTimeProductsRouter)
+app.use("/realtimeproducts",isAdmin,realTimeProductsRouter)
 app.use("/views",viewsRouter)
 app.use("/cookie",cookiesRouter)
 app.use("/api/sessions/",sessionsRouter)

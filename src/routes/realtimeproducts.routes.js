@@ -10,5 +10,6 @@ realTimeProductsRouter.get('/', (req,res)=>{
     }
     catch (error) {
         return res.status(500).json({ status: "error", msg: "Error getting the products" })
-    }    
+    }
+    
 })

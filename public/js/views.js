@@ -27,7 +27,7 @@ if (emptyCart) {
 
 if (buy) {
     buy.addEventListener('click', () => {
-        deleteCart();
+        createTicket();
     });
 }
 
@@ -112,6 +112,23 @@ async function deleteCart(){
     }
 }
 
+async function createTicket(){
+    try {
+        const response = await fetch(`/api/carts/${cid}/purchase`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error('Error creating ticket');
+        }
+
+        refreshCart(cid)
+
+    } catch (error) {
+        console.error('Error creating ticket:', error);
+    }
+}
+
 async function refreshCart(cid,pid){
     socket.emit('viewCart_front_back', {
         cid: cid,
@@ -187,6 +204,4 @@ function openModal() {
 }
 
 function closeModal() {
-    document.getElementById("modal").classList.add("hidden");
-}
-
+    document.getElementById("modal").classList.add("hidden");}

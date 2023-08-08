@@ -1,9 +1,10 @@
 import express from "express";
-import { userService } from "../services/users.service.js";
 import { usersController } from "../controllers/users.controller.js";
 export const usersRouter = express.Router();
 
 usersRouter.get("/", usersController.getAll);
+
+usersRouter.get("/:username", usersController.getOne);
 
 usersRouter.post("/", usersController.create);
 

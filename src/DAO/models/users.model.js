@@ -33,10 +33,10 @@ class UsersModel{
         }
     }
 
-    async update({id, firstName, lastName, email}){
+    async update({id, first_Name, last_Name, email}){
         const userUpdated = await MongooseUserModel.updateOne(
             { _id: id },
-            { firstName, lastName, email }
+            { first_Name, last_Name, email }
         );
         return userUpdated
     }
@@ -45,6 +45,15 @@ class UsersModel{
         const userDeleted = await MongooseUserModel.deleteOne({ _id: id });
         return userDeleted
     }
+
+    async updateTicketUser({tid,email}){
+
+        await MongooseUserModel.findOneAndUpdate(
+            { email:email },
+            { $push: { tickets: tid } }
+        )
+
+    }
 }
 
-export const userModel = new UsersModel()
+export const UsersMongo = new UsersModel()
