@@ -1,129 +1,138 @@
-import CurrentDTO from "../DAO/DTO/current.dto.js"
+import CustomError from "../services/errors/custom-error.js";
+import EErros from "../services/errors/enums.js";
+import { userService } from "../services/users.service.js";
 
-class SessionsController{
-    get = async (req,res)=>{
-        try{
-            if (req.session.user) {
-                const dataUser = req.session.user
-                const {username} = dataUser
-                const existUser = true
-    
-                return res.render('index',{existUser,username})
-            }else{
-                return res.render('index')
-            }
-        }
-        catch (error) {
-            console.log(error)
-            return res.status(500).json({ status: "error", msg: error })
-        }
-    }
-
-    getLogin = (req,res)=>{
-        try{
-            return res.render('login')
-        }
-        catch (error) {
-            console.log(error)
-            return res.status(500).json({ status: "error", msg: error })
-        }
-        
-    }
-
-    postLogin = (req, res) => {
+class UsersController {
+    getAll = async (req, res) => {
         try {
-            req.session.user = { 
-                _id: req.user._id, 
-                username: req.user.username, 
-                email: req.user.email, 
-                first_name: req.user.first_name, 
-                last_name: req.user.last_name,
-                age: req.user.age, 
-                role: req.user.role,
-                cart_ID:req.user.cart_ID };
-            return res.redirect('/views/products');
-        } catch (error) {
-            console.log(error);
-            return res.status(500).json({ status: "error", msg: error });
+            const users = await userService.getAll();
+            return res.status(200).json({
+                status: "success",
+                msg: "listado de usuarios",
+                payload: users,
+            });
+        } catch (e) {
+            console.log(e);
+            return res.status(500).json({
+                status: "error",
+                msg: "something went wrong :(",
+                payload: {},
+            });
         }
     }
 
-    getRegister = (req,res)=>{
-        try{
-            return res.render('register')
-        }
-        catch (error) {
-            console.log(error)
-            return res.status(500).json({ status: "error", msg: error })
-        }
-    }
-
-    postRegister =  (req,res)=>{
-        try{
-            req.session.user = { _id: req.user._id, username: req.user.username, email: req.user.email, first_name: req.user.first_name, last_name: req.user.last_name,age: req.user.age, role: req.user.role,cart_ID:req.user.cart_ID };
-            return res.redirect('/views/products');
-        }
-        catch (error) {
-            console.log(error)
-            return res.status(500).json({ status: "error", msg: error })
+    getOne = async (req, res) => {
+        try {
+            const users = await userService.getOne(req.params.username);
+            return res.status(200).json({
+                status: "success",
+                msg: "listado de un usuario",
+                payload: users,
+            });
+        } catch (e) {
+            console.log(e);
+            return res.status(500).json({
+                status: "error",
+                msg: "something went wrong :(",
+                payload: {},
+            });
         }
     }
 
-    getLogout = (req, res) => {
-        req.session.destroy(err => {
-            if (err) {
-            return res.json({ status: 'Logout ERROR', body: err })
+    create = async (req, res) => {
+        try {
+            const {first_name,last_name,username, email,age, password} = req.body;
+            if (!first_name || !last_name || !email) {
+
+                CustomError.createError({
+                    name: "User creation error",
+                    cause: `please complete first_name = ${first_name}, last_name = ${last_name} and email = ${email}.`,
+                    message: "Error trying to create user",
+                    code: EErros.INVALID_TYPES_ERROR,
+                });
+            }else{
+                const userCreated = await userService.create({first_name,last_name,username, email,age, password});
+                return res.status(201).json({
+                    status: "success",
+                    msg: "user created",
+                    payload: userCreated,
+                });
             }
-            return res.redirect('/login');
-        })
-    }
-
-    getCurrent = async (req,res)=>{
-        try{
-            const dataUser = req.session.user
-            const currentDTO = new CurrentDTO(dataUser)
-            const {first_name,last_name,username, email,age,role} = currentDTO
-    
-            return res.render('profile',{first_name,last_name,username, email,age,role})
-        }
-        catch (error) {
-            console.log(error)
-            return res.status(500).json({ status: "error", msg: error })
+        } catch (e) {
+            console.log(e);
+            return res.status(500).json({
+                status: "error",
+                msg: "something went wrong :(",
+                payload: {},
+            });
         }
     }
 
-    getGithubCallback = (req,res)=>{
-        try{
-            req.session.user = { 
-                _id: req.user._id, 
-                username: req.user.username, 
-                email: req.user.email, 
-                first_name: req.user.first_name, 
-                last_name: req.user.last_name,
-                age: req.user.age, 
-                role: req.user.role,
-                cart_ID:req.user.cart_ID
-            };
-            return res.redirect('/views/products');
+    update = async (req, res) => {
+        try {
+            const { id } = req.params;
+            const {first_name,last_name,username, email,age, password} = req.body;
+            if (!first_name || !last_name || !email || !id) {
+                console.log(
+                    "validation error: please complete firstName, lastname and email."
+                );
+                return res.status(404).json({
+                    status: "error",
+                    msg: "please complete firstName, lastname and email.",
+                    payload: {},
+                });
+            }
+            try {
+                const userUpdated = await userService.update({id, first_name, last_name, email}
+                );
+                if (userUpdated.matchedCount > 0) {
+                    return res.status(201).json({
+                        status: "success",
+                        msg: "user update",
+                        payload: {},
+                    })
+                }else{
+                    return res.status(404).json({
+                        status: "error",
+                        msg: "user not found",
+                        payload: {},
+                    });
+                }
+            } catch (error) {
+                return res.status(500).json({
+                    status: "error",
+                    msg: "db server error while updating user",
+                    payload: {},
+                });
+            }
+        } catch (e) {
+            console.log(e);
+            return res.status(500).json({
+                status: "error",
+                msg: "something went wrong :(",
+                payload: {},
+            });
         }
-        catch (error) {
-            console.log(error)
-            return res.status(500).json({ status: "error", msg: error })
-        }
-        
     }
 
-    getError = (req,res)=>{
-        try{
-            const { msg } = req.query;
-            return res.render('errorLogin', { msg });
+    delete = async (req, res) => {
+        try {
+            const { id } = req.params;
+            await userService.delete({ id });
+            return res.status(200).json({
+                status: "success",
+                msg: "user deleted",
+                payload: {},
+            });
+        } catch (e) {
+            console.log(e);
+            return res.status(500).json({
+                status: "error",
+                msg: "something went wrong :(",
+                payload: {},
+            });
         }
-        catch (error) {
-            console.log(error)
-            return res.status(500).json({ status: "error", msg: error })
-        }
-        
     }
 }
 
-export const sessionsController = new SessionsController()
+export const usersController = new UsersController();
